@@ -1,0 +1,198 @@
+======================================================================
+  BACKUP DE SESIÓN Y RESUMEN DEL PROYECTO — MINICRAFT 3D
+======================================================================
+Fecha de sesión: 28 de octubre de 2026
+Directorio: C:\Users\Mx\Desktop\unity\minicraft - copia
+
+1. RESUMEN DE CAMBIOS REALIZADOS
+----------------------------------------------------------------------
+a) Reducción de árboles:
+   - Se modificó la función `treeAt()` en `index.html` para disminuir la
+     probabilidad de aparición de árboles (de 0.007 a 0.0025), haciendo que
+     el mapa tenga menos densidad boscosa y mejor rendimiento.
+
+b) Optimización y ajuste de antorchas / luces:
+   - Se redujo la cantidad de antorchas aumentando la separación entre celdas
+     (`TORCH_CELL` de 9 a 18) y reduciendo el límite máximo (`MAX_TORCHES` de 240 a 120).
+   - Se incrementó notablemente el rango de iluminación y el tamaño de los
+     resplandores (`gs` y `ps`) así como el alcance de las luces puntuales (`torchLightA`/B)
+     para iluminar más área sin poner antorchas tan juntas.
+   - Se ajustó el color y la opacidad del brillo (`torchGlowMat` y `torchPoolMat`)
+     con tonos más cálidos y opacidad reducida (`0.55` y `0.25`) para evitar que
+     saturaran con un amarillo excesivo o alteraran la visión general del mapa.
+   - Se corregió el bug en el comando `/light` asegurando que la función de
+     actualización (`updateTorches`) recalcule las celdas con el nuevo multiplicador
+     dinámico sin hacer desaparecer las luces.
+
+c) Consola de Comandos estilo Counter-Strike:
+   - Se añadió una consola desplegable superior activada con la tecla tilde (`~` / `` ` `` / `Backquote`).
+   - Se implementaron los siguientes comandos:
+     * `/stop_spawn` (o `/stop_spanw`): Detiene la aparición de zombis y elimina todos los actuales.
+     * `/play_spawn` (o `/play_span`): Reactiva la aparición de zombis.
+     * `/light <valor>`: Multiplica la cantidad y densidad de luces (ej. `/light 2`).
+     * `/light_default`: Restablece el multiplicador de luces a 1x.
+     * `/zombie <valor>`: Multiplica la velocidad de movimiento de los zombis.
+     * `/zombie_default`: Restablece la velocidad de los zombis a 1x.
+     * `/god_on` / `/god_off`: Activa o desactiva la invencibilidad (Modo Dios).
+     * `/ammo_on` / `/ammo_off`: Activa o desactiva la munición infinita y cargador siempre lleno.
+     * `/granade <cantidad>`: Establece el número de granadas (0-9).
+     * `/speed <valor>`: Modifica el multiplicador de velocidad del jugador.
+     * `/jump <valor>`: Modifica la fuerza de salto del jugador.
+     * `/wave <numero>`: Salta directamente a una oleada específica (1 a 5).
+     * `/clear`: Limpia el historial de la consola.
+     * `/help`: Muestra la ayuda de comandos.
+
+
+2. ESTRUCTURA DE ARCHIVOS DEL PROYECTO
+----------------------------------------------------------------------
+- index.html        : Aplicación completa del juego (HTML, CSS, Lógica 3D con Three.js, Consola y Controles)
+- three.min.js      : Librería Three.js r128 (motor de renderizado 3D)
+- server.js         : Servidor estático opcional en Node.js (puerto 8123)
+- LEEME.txt         : Documentación oficial del juego, controles y notas técnicas
+- captura.png       : Captura de pantalla del juego
+- BACKUP_SESION.txt : Este archivo de respaldo generado con el resumen de la sesión
+
+
+3. CÓMO INICIAR EL JUEGO
+----------------------------------------------------------------------
+1) Abre "index.html" directamente en tu navegador (Chrome, Edge o Firefox).
+   O si tu navegador bloquea recursos locales, ejecuta en una terminal:
+   `node server.js` y entra en `http://localhost:8123`
+2) Pulsa el botón "JUGAR" para capturar el ratón.
+3) Pulsa la tecla **`~`** (a la izquierda del 1) para desplegar la consola de comandos.
+4) Pulsa **`I`** para abrir el inventario o **`Esc`** para pausar.
+
+
+======================================================================
+  SESIÓN DEL 29 DE OCTUBRE DE 2026 — CARPETA "Production"
+======================================================================
+
+1. RENDIMIENTO
+----------------------------------------------------------------------
+a) Calidad adaptativa:
+   - La resolución interna (renderer.setPixelRatio) se ajusta sola entre
+     0.5x y 2x (base máxima 1.5x en pantallas retina). Si la media baja
+     de 40 FPS reduce en pasos de 0.1 a 0.25; si sube de 57 FPS recupera
+     0.05. El estado se muestra arriba a la izquierda:
+     "X/Y/Z · FPS · AUTO 90%".
+   - Nuevo comando /quality auto|bajo|medio|alto para fijar la calidad.
+
+b) Antorchas:
+   - Los charcos de luz aditivos (los que más relleno consumían) se
+     limitan a los 28 más cercanos en auto, 14 en bajo y 44 en alto.
+     Su tamaño baja de 20 a 15 unidades.
+   - El resplandor, la punta y el palo se ordenan por distancia y se
+     dibujan sólo para las antorchas más cercanas.
+   - CORREGIDO: los InstancedMesh tenían capacidad 120 pero /light 2
+     pedía hasta 240 antorchas. Ahora la capacidad real es 360 y el
+     número se recorta a ella.
+
+c) Partículas:
+   - Antes cada partícula era una malla independiente (hasta 160 draw
+     calls). Ahora hay 4 InstancedMesh (sangre, sangre oscura, polvo y
+     chispas) con pools fijos y se ocultan con escala 0. Se pasa de
+     hasta 160 draw calls a 4.
+
+d) Chunks:
+   - processQueue usa un presupuesto de 5 ms por frame (antes construía
+     hasta 3 chunks por frame) y sólo 2 construcciones nuevas por frame,
+     para evitar tirones al moverse.
+
+2. CONTENIDO NUEVO
+----------------------------------------------------------------------
+a) Escopeta (tecla 5):
+   - 6 cartuchos, 8 postas por disparo, 10 de daño al cuerpo y 16 a la
+     cabeza por posta, con caída de hasta el 50% a distancia.
+   - Cadencia 0,85 s, recarga 2,3 s, alcance 42 bloques.
+   - Modelo propio de dos cañones con culata y guardamanos de madera.
+   - Sonido sintetizado propio.
+
+b) Tres tipos de zombi:
+   - Normal: 50 HP, velocidad media, 10 de daño.
+   - Runner: 30 HP, 4,0-4,7 de velocidad, escala 0.85, aparece desde la
+     oleada 2.
+   - Bruto: 180 HP, 1,35-1,7 de velocidad, escala 1.32, 20 de daño,
+     aparece desde la oleada 3.
+   - Las cajas de colisión, la altura de cabeza, el alcance de ataque y
+     la separación entre zombis ahora dependen del tipo.
+   - Nuevo comando /spawn normal|runner|brute [1-16].
+
+c) HUD e inventario:
+   - Se añade la ranura 5 (escopeta), teclas 1-5 y textos actualizados.
+
+3. DOCUMENTACIÓN
+----------------------------------------------------------------------
+- LEEME.txt actualizado: controles, arsenal, consola, tipos de zombi,
+  rendimiento y notas técnicas.
+- Este archivo incluye el resumen de la sesión.
+
+4. COPIA DE SEGURIDAD
+----------------------------------------------------------------------
+- backups/index_antes_optimizacion_2026-10-29.html conserva el index.html
+  anterior a todos estos cambios.
+
+5. VERIFICACIÓN
+----------------------------------------------------------------------
+- El JavaScript del index se extrajo y se validó con "node --check":
+  sintaxis correcta.
+- No se pudo probar en navegador desde esta sesión; queda pendiente
+  medir FPS en el equipo real y ajustar los umbrales si hace falta.
+
+6. ARCHIVOS
+----------------------------------------------------------------------
+- index.html        Juego (rendimiento + escopeta + tipos de zombi + consola)
+- LEEME.txt         Documentación actualizada
+- BACKUP_SESION.txt Este resumen
+- server.js         Servidor estático (puerto 8123)
+- three.min.js      Three.js r128
+- backups/          Copia del index.html anterior
+
+
+======================================================================
+  AMPLIACIÓN: ZOMBI ROJO (29/10/2026)
+======================================================================
+
+1. NUEVO TIPO DE ZOMBI
+----------------------------------------------------------------------
+- Tipo interno: "red".
+- Vida: 120 (más del doble que el normal verde, que tiene 50).
+- Velocidad: 4,7 - 6,2, exactamente el doble del rango del zombi común
+  (2,35 - 3,1).
+- Daño: 10 por golpe (igual que el zombi común).
+- Color: piel roja brillante, camiseta roja oscura y pantalón casi negro.
+  También tiene una textura de cara roja propia (zombieFaceRedTex), con
+  ojos amarillos, no la verde que comparten los demás.
+- Brillo: la piel lleva emissive 0x6a0e0e y la camiseta 0x2a0404 para
+  que el rojo destaque de noche.
+- Cabeza letal: cualquier disparo o golpe de cuchillo en la cabeza pone
+  su vida a 0 al instante, sin importar los 120 HP. Se implementa con la
+  propiedad headshotKill y la función applyZombieDamage().
+- Tamaño: escala 1.4 (40% más grande que el zombi normal). La caja de
+  colisión, la altura y el alcance de ataque se calculan con esa escala.
+
+2. APARICIÓN POR OLEADAS
+----------------------------------------------------------------------
+- No aparece en la oleada 1.
+- Cuota por oleada: (oleada - 1) * 4, máximo 16.
+    Oleada 2: 4 rojos.
+    Oleada 3: 8 rojos.
+    Oleada 4: 12 rojos.
+    Oleada 5: 16 rojos.
+- La cuota se controla con redWaveQuota y redWaveSpawned. Se reinicia al
+  cambiar de oleada, también al usar /wave.
+- Se mezclan con los demás zombis; si queda poco tiempo de oleada se
+  fuerza su aparición para completar la cuota.
+- Se puede invocar uno manualmente con /spawn red [cantidad] (o /spawn rojo).
+
+3. ARCHIVOS TOCADOS
+----------------------------------------------------------------------
+- index.html: ZOMBIE_TYPES.red, headshotKill, applyZombieDamage(),
+  cuota de rojos en updateSpawner()/spawnWaveZombie() y ayuda de consola.
+- LEEME.txt: tipos de zombi, daño, consola y notas técnicas.
+- BACKUP_SESION.txt: esta ampliación.
+- La copia de seguridad anterior sigue en
+  backups/index_antes_optimizacion_2026-10-29.html.
+- backups/index_con_zombi_rojo_2026-10-29.html es una copia de esta
+  versión con el zombi rojo ya incluido.
+
+
